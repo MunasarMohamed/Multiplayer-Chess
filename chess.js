@@ -11,6 +11,9 @@ let currentTurn = 'white';
 // The square of the piece selected by clicking or dragging, or null if no piece is selected.
 let selectedSquare = null;
 
+// How the last square was pressed: "mouse", "touch" or "pen". Used to turn off dragging on touch screens.
+let lastPointerType = 'mouse';
+
 // The promotion move waiting for the player to choose a piece, like { from: "e7", to: "e8" }, or null.
 let pendingPromotion = null;
 
@@ -764,6 +767,13 @@ function allowDrop(event) {
 function drag(event){
     let piece = getPiece(event.target.closest('.square').id);
 
+// On a touch screen, holding a piece would start the browser's own drag, which is slow on phones.
+// Pieces are moved by tapping there instead, so the drag is cancelled.
+    if (lastPointerType == 'touch') {
+        event.preventDefault();
+        return;
+    }
+
 // Only the pieces of the player whose turn it is can be dragged, and nothing can be dragged after the game is over.
 // In an online game you can't drag anything while it is the opponent's turn.
     if (!canPlayerMove() || !piece || piece.color != currentTurn) {
@@ -832,8 +842,17 @@ function clearSelection() {
     }
 }
 
-// Function for click-to-move. The first click selects a piece, the second click moves it.
+// Function for click-to-move (tap-to-move on a phone). The first click selects a piece, the second click moves it.
+// It runs on pointerdown, so it reacts as soon as the finger touches the screen or the mouse button is pressed,
+// instead of waiting until it is released.
 function clickSquare(event) {
+    lastPointerType = event.pointerType;
+
+// Only the left mouse button selects and moves, not a right-click.
+    if (event.button != 0) {
+        return;
+    }
+
 // After the game is over, or while it is the opponent's turn online, nothing can be selected or moved.
     if (!canPlayerMove()) {
         return;

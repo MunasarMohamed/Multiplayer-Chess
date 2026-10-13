@@ -1,8 +1,13 @@
-/* The size of the board: 80% of the screen width, at most 600px, and small enough that the board, the turn
-   indicator, the captured pieces and the buttons below all fit on the screen without scrolling.
-   It is never smaller than 240px. The captured pieces rows use the same width. */
+/* The size of the board: 94% of the screen width (almost the full width on a phone), at most 600px, and small
+   enough that the board, the turn indicator, the captured pieces and the buttons below all fit on the screen
+   without scrolling. It is never smaller than 240px. The captured pieces rows use the same width.
+   dvh is the height of the screen without the address bar of a phone browser. Browsers that don't know dvh
+   skip the second line and use the first. The last line rounds the size down to a multiple of 8px, so every
+   square is a whole number of pixels and no thin lines show up between the squares. */
 :root {
-    --boardSize: max(240px, min(80vw, 600px, calc(100vh - 240px)));
+    --boardSize: max(240px, min(94vw, 600px, calc(100vh - 240px)));
+    --boardSize: max(240px, min(94vw, 600px, calc(100dvh - 240px)));
+    --boardSize: round(down, max(240px, min(94vw, 600px, calc(100dvh - 240px))), 8px);
 }
 
 /* No default margin, so the page is exactly as high as the screen and does not get a scrollbar. */
@@ -11,6 +16,7 @@ body {
     padding: 12px 0;
     box-sizing: border-box;
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -61,10 +67,18 @@ body {
     display: none;
 }
 
+/* On a phone, quick taps on the board are moves, not double-tap zoom, and holding a piece doesn't open
+   the image menu or select it. touch-action also applies to the squares and pieces inside the board.
+   The tap highlight is turned off, so a tap doesn't flash gray before the piece is selected. */
 .chessBoard {
     height: var(--boardSize);
     width: var(--boardSize);
     margin: 0 auto;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
     display: flex;
     position: relative;
     flex-wrap: wrap;
@@ -141,8 +155,12 @@ img {
     width: 100%;
     height: 100%;
 }
-img:hover {
-   filter: drop-shadow(1px 1px 2px rgb(38, 38, 39));
+/* The shadow under the mouse is only used on devices with a mouse. On a touch screen it would stay on
+   a piece after tapping it. */
+@media (hover: hover) {
+    img:hover {
+        filter: drop-shadow(1px 1px 2px rgb(38, 38, 39));
+    }
 }
 
 /* The selected piece's square. The inset shadow tints the square but stays behind the piece. */
@@ -217,6 +235,8 @@ img:hover {
    order: 4 keeps it at the bottom when the board is flipped. */
 .onlinePanel {
     order: 4;
+    max-width: 94vw;
+    text-align: center;
     margin-top: 12px;
     display: flex;
     flex-direction: column;
